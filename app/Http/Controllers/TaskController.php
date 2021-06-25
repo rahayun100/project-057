@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Task;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class TaskController extends Controller
 {
@@ -15,6 +16,8 @@ class TaskController extends Controller
     public function index()
     {
         //
+        $data = Task::all();
+        return response()->json($data);
     }
 
     /**
@@ -36,6 +39,15 @@ class TaskController extends Controller
     public function store(Request $request)
     {
         //
+        $validator = Validator::make($request->all(), [ 
+            'name' => 'required',
+            'description' => 'required',
+            
+        ]);
+        if($validator->passes()){
+            return Task::create($request->all());
+        }
+        return response()->json(['message' => 'Data Gagal Di Tambahkan!!']);
     }
 
     /**
@@ -44,9 +56,14 @@ class TaskController extends Controller
      * @param  \App\Task  $task
      * @return \Illuminate\Http\Response
      */
-    public function show(Task $task)
+    public function show( $task)
     {
         //
+        $data = Task::where('id',$task)->first();
+        if(!empty($data)){
+            return $data;
+        }
+        return response()->json(['message' => 'Data Tidak Di Temukan'], 404);
     }
 
     /**
@@ -67,9 +84,29 @@ class TaskController extends Controller
      * @param  \App\Task  $task
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Task $task)
+    public function update(Request $request,  $task)
     {
         //
+        $data = Task::where('id',$task)->first();
+        if(!empty($data)){
+            $validator = Validator::make($request->all(), [ 
+                'name' => 'required',
+                'description' => 'required',
+            ]);
+            if($validator->passes()){
+                $data->update($request->all());
+                return response()->json([
+                    'message' => 'Data Berhasil Di simpan',
+                    'data' => $data
+                ]);
+            }else{
+                return response()->json([
+                    'message' => 'Data gagal di simpan',
+                    'data' => $validator->errors()->all()
+                ]);
+            }
+        }
+        return response()->json(['message' => 'Data Tidak di temukan!'], 404);
     }
 
     /**
@@ -78,8 +115,18 @@ class TaskController extends Controller
      * @param  \App\Task  $task
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Task $task)
+    public function destroy( $task)
     {
         //
+        $data = Task::where('id', $task)->first();
+        if(empty($data)){
+            return response()->json([
+                'message' => 'Data Tidak Ditemukan'
+            ]);
+        }
+        $data->delete();
+        return response()->json([
+            'message' => 'Data berhasil di hapus'
+        ]);
     }
 }
